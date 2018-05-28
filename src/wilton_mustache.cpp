@@ -25,6 +25,7 @@
 
 #include <cstdint>
 #include <array>
+#include <map>
 
 #include "staticlib/config.hpp"
 #include "staticlib/io.hpp"
@@ -91,3 +92,41 @@ char* wilton_mustache_render_file /* noexcept */ (
         return wilton::support::alloc_copy(TRACEMSG(e.what() + "\nException raised"));
     }
 }
+
+
+char* wilton_render_mustache_partials(
+        const char* template_file_path,
+        int template_file_path_len,
+        const char* values_json,
+        int values_json_len,
+        void* partials,
+        char** output_text_out,
+        int* output_text_len_out){
+    if (nullptr == template_file_path) return wilton::support::alloc_copy(TRACEMSG("Null 'template_file_path' parameter specified"));
+    if (!sl::support::is_uint16(template_file_path_len)) return wilton::support::alloc_copy(TRACEMSG(
+            "Invalid 'template_file_path_len' parameter specified: [" + sl::support::to_string(template_file_path_len) + "]"));
+    if (nullptr == values_json) return wilton::support::alloc_copy(TRACEMSG("Null 'values_json' parameter specified"));
+    if (!sl::support::is_uint32_positive(values_json_len)) return wilton::support::alloc_copy(TRACEMSG(
+            "Invalid 'values_json_len' parameter specified: [" + sl::support::to_string(values_json_len) + "]"));
+    if (nullptr == output_text_out) return wilton::support::alloc_copy(TRACEMSG("Null 'output_text_out' parameter specified"));
+    if (nullptr == output_text_len_out) return wilton::support::alloc_copy(TRACEMSG("Null 'output_text_len_out' parameter specified"));
+    if (nullptr == partials) return wilton::support::alloc_copy(TRACEMSG("Null 'partials' parameter specified"));
+
+    try {
+        uint16_t template_file_path_len_u16 = static_cast<uint16_t> (template_file_path_len);
+        std::string template_file_path_str{template_file_path, template_file_path_len_u16};
+        sl::json::value json = sl::json::load({values_json, values_json_len});
+        std::map<std::string, std::string>* partials_ptr = static_cast<std::map<std::string, std::string>*> (partials);
+
+        auto mp = sl::mustache::source(template_file_path_str, std::move(json), *partials_ptr);
+        auto sink = sl::io::string_sink();
+        sl::io::copy_all(mp, sink);
+        *output_text_out = wilton::support::alloc_copy(sink.get_string());
+        *output_text_len_out = static_cast<int>(sink.get_string().length());
+
+        return nullptr;
+    } catch (const std::exception& e) {
+        return wilton::support::alloc_copy(TRACEMSG(e.what() + "\nException raised"));
+    }
+}
+
