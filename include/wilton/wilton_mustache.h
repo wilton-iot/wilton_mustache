@@ -42,8 +42,8 @@ char* wilton_mustache_render_file(
         int* output_text_len_out);
 
 char* wilton_render_mustache_partials(
-        const char* template_file_path,
-        int template_file_path_len,
+        const char* template_str,
+        int template_str_len,
         const char* values_json,
         int values_json_len,
         void* partials,
