@@ -23,8 +23,6 @@
 extern "C" {
 #endif
 
-// todo
-
 char* wilton_mustache_render(
         const char* template_text,
         int template_text_len,
